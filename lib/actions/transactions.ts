@@ -132,3 +132,36 @@ export async function voidTransaction(transactionId: string, kidId: string) {
   revalidatePath(`/kid/${kidId}/dashboard`)
   return { success: true }
 }
+
+export async function setStartingBalances(
+  kidId: string,
+  savingsCents: number,
+  spendCents: number,
+  givingCents: number
+) {
+  await requireParentSession()
+
+  if (savingsCents < 0 || spendCents < 0 || givingCents < 0) {
+    return { error: 'Starting balances cannot be negative' }
+  }
+
+  const totalCents = savingsCents + spendCents + givingCents
+  if (totalCents === 0) return { success: true }
+
+  const supabase = await createClient()
+  const { error } = await supabase.rpc('process_earn_transaction', {
+    p_kid_id: kidId,
+    p_amount_cents: totalCents,
+    p_description: 'Starting Balance',
+    p_savings_cents: savingsCents,
+    p_spend_cents: spendCents,
+    p_giving_cents: givingCents,
+    p_split_snapshot: null,
+  })
+
+  if (error) return { error: error.message }
+
+  revalidatePath(`/parent/kids/${kidId}`)
+  revalidatePath(`/kid/${kidId}/dashboard`)
+  return { success: true }
+}

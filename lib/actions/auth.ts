@@ -6,6 +6,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { createKidSession, clearKidSession } from '@/lib/auth/kid'
 import { redirect } from 'next/navigation'
 import { compare } from 'bcryptjs'
+import { headers } from 'next/headers'
 
 export async function loginParent(formData: FormData) {
   const email = formData.get('email') as string
@@ -37,14 +38,29 @@ export async function signupParent(formData: FormData) {
     return { error: 'Password must be at least 6 characters' }
   }
 
+  const headersList = await headers()
+  const origin = headersList.get('origin') ?? 'http://localhost:3000'
+
   const supabase = await createClient()
-  const { error } = await supabase.auth.signUp({ email, password })
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      emailRedirectTo: `${origin}/auth/callback`,
+    },
+  })
 
   if (error) {
     return { error: error.message }
   }
 
-  redirect('/parent/dashboard')
+  // If a session was returned, email confirmation is disabled — log in directly
+  if (data.session) {
+    redirect('/parent/dashboard')
+  }
+
+  // Email confirmation required
+  return { needsConfirmation: true, email }
 }
 
 export async function logoutParent() {

@@ -7,9 +7,15 @@ export async function generateMetadata() {
   return { title: 'Sign In — Three Jars' }
 }
 
-export default async function LoginPage() {
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ message?: string }>
+}) {
   const user = await getParentSession()
   if (user) redirect('/parent/dashboard')
+
+  const { message } = await searchParams
 
   return (
     <main className="min-h-screen flex items-center justify-center bg-slate-50 px-4">
@@ -22,6 +28,11 @@ export default async function LoginPage() {
             Family finance tracker for smart kids
           </p>
         </div>
+        {message && (
+          <div className="mb-4 px-4 py-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm text-center">
+            {message}
+          </div>
+        )}
         <LoginForm />
         <div className="mt-6 text-center">
           <a

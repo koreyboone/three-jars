@@ -7,6 +7,7 @@ import { loginParent, signupParent } from '@/lib/actions/auth'
 export default function LoginForm() {
   const [isSignup, setIsSignup] = useState(false)
   const [error, setError] = useState('')
+  const [confirmedEmail, setConfirmedEmail] = useState('')
   const [isPending, startTransition] = useTransition()
 
   async function handleSubmit(formData: FormData) {
@@ -17,8 +18,33 @@ export default function LoginForm() {
         : await loginParent(formData)
       if (result?.error) {
         setError(result.error)
+      } else if ('needsConfirmation' in result && result.needsConfirmation) {
+        setConfirmedEmail(result.email as string)
       }
     })
+  }
+
+  if (confirmedEmail) {
+    return (
+      <div className="bg-white rounded-xl shadow-lg p-8 text-center">
+        <div className="text-5xl mb-4">📬</div>
+        <h2 className="text-xl font-bold text-navy mb-2">Check your email!</h2>
+        <p className="text-slate-600 mb-4">
+          We sent a confirmation link to{' '}
+          <span className="font-semibold text-savings">{confirmedEmail}</span>.
+          Click it to activate your account and you&apos;ll be logged in automatically.
+        </p>
+        <p className="text-xs text-slate-400">
+          Didn&apos;t receive it? Check your spam folder.
+        </p>
+        <button
+          onClick={() => { setConfirmedEmail(''); setIsSignup(false) }}
+          className="mt-4 text-sm text-savings hover:underline"
+        >
+          Back to sign in
+        </button>
+      </div>
+    )
   }
 
   return (
@@ -84,7 +110,9 @@ export default function LoginForm() {
           disabled={isPending}
           className="w-full py-3 px-6 rounded-lg bg-savings text-white font-bold text-lg hover:bg-savings/90 transition-colors disabled:opacity-50"
         >
-          {isPending ? 'Please wait...' : isSignup ? 'Create Account' : 'Sign In'}
+          {isPending
+            ? (isSignup ? 'Creating account...' : 'Signing in...')
+            : (isSignup ? 'Create Account' : 'Sign In')}
         </button>
       </form>
     </div>
