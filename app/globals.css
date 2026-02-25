@@ -1,0 +1,61 @@
+/* app/globals.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-savings: #1a7a4a;
+  --color-savings-accent: #a8f0c6;
+  --color-spend: #c97c1a;
+  --color-spend-accent: #ffd966;
+  --color-giving: #b52d5a;
+  --color-giving-accent: #ffb3c8;
+  --color-navy: #1e293b;
+}
+
+@layer base {
+  body {
+    @apply antialiased text-slate-800;
+  }
+}
+
+@layer utilities {
+  .font-display {
+    font-family: var(--font-display);
+  }
+  .font-body {
+    font-family: var(--font-body);
+  }
+}
+
+/* Coin shimmer animation for kid mode balances */
+@keyframes shimmer {
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+.coin-shimmer {
+  background: linear-gradient(
+    90deg,
+    currentColor 0%,
+    rgba(255, 255, 255, 0.6) 50%,
+    currentColor 100%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: shimmer 2s ease-in-out 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .coin-shimmer {
+    animation: none;
+    background: none;
+    -webkit-background-clip: unset;
+    background-clip: unset;
+  }
+}
