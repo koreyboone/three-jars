@@ -6,7 +6,8 @@ import Link from 'next/link'
 import JarSettingsForm from '@/components/parent/jar-settings-form'
 import SavingsGoalForm from '@/components/parent/savings-goal-form'
 import ResetPinForm from '@/components/parent/reset-pin-form'
-import type { Kid, JarSettings, SavingsGoal } from '@/types/db'
+import BalanceAdjustmentForm from '@/components/parent/balance-adjustment-form'
+import type { Kid, Jar, JarSettings, SavingsGoal } from '@/types/db'
 
 export async function generateMetadata() {
   return { title: 'Kid Settings — Three Jars' }
@@ -30,7 +31,7 @@ export default async function KidSettingsPage({
 
   if (!kid) redirect('/parent/dashboard')
 
-  const [{ data: settings }, { data: goal }] = await Promise.all([
+  const [{ data: settings }, { data: goal }, { data: jars }] = await Promise.all([
     supabase.from('jar_settings').select('*').eq('kid_id', kidId).single(),
     supabase
       .from('savings_goals')
@@ -39,7 +40,13 @@ export default async function KidSettingsPage({
       .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle(),
+    supabase.from('jars').select('*').eq('kid_id', kidId),
   ])
+
+  const jarList = (jars ?? []) as Jar[]
+  const savingsBalance = jarList.find((j) => j.type === 'savings')?.balance_cents ?? 0
+  const spendBalance = jarList.find((j) => j.type === 'spend')?.balance_cents ?? 0
+  const givingBalance = jarList.find((j) => j.type === 'giving')?.balance_cents ?? 0
 
   return (
     <div>
@@ -61,6 +68,13 @@ export default async function KidSettingsPage({
             settings={settings as JarSettings}
           />
         )}
+        <BalanceAdjustmentForm
+          kidId={kidId}
+          kidName={(kid as Kid).name}
+          currentSavings={savingsBalance}
+          currentSpend={spendBalance}
+          currentGiving={givingBalance}
+        />
         <SavingsGoalForm
           kidId={kidId}
           existingGoal={goal as SavingsGoal | null}

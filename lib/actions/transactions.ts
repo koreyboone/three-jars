@@ -137,7 +137,8 @@ export async function setStartingBalances(
   kidId: string,
   savingsCents: number,
   spendCents: number,
-  givingCents: number
+  givingCents: number,
+  description = 'Starting Balance'
 ) {
   await requireParentSession()
 
@@ -152,7 +153,7 @@ export async function setStartingBalances(
   const { error } = await supabase.rpc('process_earn_transaction', {
     p_kid_id: kidId,
     p_amount_cents: totalCents,
-    p_description: 'Starting Balance',
+    p_description: description,
     p_savings_cents: savingsCents,
     p_spend_cents: spendCents,
     p_giving_cents: givingCents,

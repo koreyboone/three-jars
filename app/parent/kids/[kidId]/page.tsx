@@ -72,25 +72,28 @@ export default async function KidOverviewPage({
         </div>
       </div>
 
-      {/* Navigation tabs */}
-      <div className="flex gap-2 mb-6 overflow-x-auto">
+      {/* Navigation — icon cards, no horizontal scroll */}
+      <div className="grid grid-cols-3 gap-3 mb-6">
         <Link
           href={`/parent/kids/${kidId}/add-transaction`}
-          className="px-4 py-2 bg-savings text-white rounded-lg font-semibold text-sm whitespace-nowrap hover:bg-savings/90"
+          className="flex flex-col items-center gap-1.5 px-2 py-4 bg-savings/10 text-savings rounded-xl font-semibold text-sm hover:bg-savings/20 transition-colors text-center"
         >
-          💵 Add Transaction
+          <span className="text-2xl leading-none">💵</span>
+          <span className="text-xs">Add Transaction</span>
         </Link>
         <Link
           href={`/parent/kids/${kidId}/transactions`}
-          className="px-4 py-2 bg-white text-navy rounded-lg font-semibold text-sm border border-slate-200 whitespace-nowrap hover:bg-slate-50"
+          className="flex flex-col items-center gap-1.5 px-2 py-4 bg-slate-100 text-navy rounded-xl font-semibold text-sm hover:bg-slate-200 transition-colors text-center"
         >
-          📋 History
+          <span className="text-2xl leading-none">📋</span>
+          <span className="text-xs">History</span>
         </Link>
         <Link
           href={`/parent/kids/${kidId}/settings`}
-          className="px-4 py-2 bg-white text-navy rounded-lg font-semibold text-sm border border-slate-200 whitespace-nowrap hover:bg-slate-50"
+          className="flex flex-col items-center gap-1.5 px-2 py-4 bg-slate-100 text-navy rounded-xl font-semibold text-sm hover:bg-slate-200 transition-colors text-center"
         >
-          ⚙️ Settings
+          <span className="text-2xl leading-none">⚙️</span>
+          <span className="text-xs">Settings</span>
         </Link>
       </div>
 
