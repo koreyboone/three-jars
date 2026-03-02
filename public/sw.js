@@ -1,7 +1,6 @@
 // Service Worker — stale-while-revalidate for app shell + balance data
-const CACHE_NAME = 'three-jars-v1';
+const CACHE_NAME = 'three-jars-v2';
 const APP_SHELL = [
-  '/',
   '/offline.html',
 ];
 
@@ -43,18 +42,21 @@ self.addEventListener('fetch', (event) => {
       cache.match(request).then((cachedResponse) => {
         const fetchPromise = fetch(request)
           .then((networkResponse) => {
-            // Cache successful responses
+            // Cache successful responses only
             if (networkResponse.ok) {
               cache.put(request, networkResponse.clone());
             }
             return networkResponse;
           })
           .catch(() => {
-            // If offline and no cache, show offline page for navigation requests
+            // If offline, show offline page for navigation requests
             if (request.mode === 'navigate') {
-              return cache.match('/offline.html');
+              return cache.match('/offline.html').then(
+                (r) => r ?? new Response('Offline', { status: 503 })
+              );
             }
-            return undefined;
+            // Return 503 for sub-resources — avoids ERR_FAILED from undefined
+            return new Response('Network error', { status: 503 });
           });
 
         // Return cached response immediately, update in background
