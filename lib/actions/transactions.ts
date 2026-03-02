@@ -69,6 +69,47 @@ export async function addEarnTransaction(kidId: string, formData: FormData) {
   return { success: true }
 }
 
+export async function addSingleJarEarnTransaction(kidId: string, formData: FormData) {
+  await requireParentSession()
+
+  const dollarsStr = formData.get('amount') as string
+  const description = formData.get('description') as string
+  const jarTarget = formData.get('jar_target') as 'savings' | 'spend' | 'giving'
+
+  if (!dollarsStr || !description?.trim()) {
+    return { error: 'Amount and description are required' }
+  }
+  if (!jarTarget || !['savings', 'spend', 'giving'].includes(jarTarget)) {
+    return { error: 'Please select a jar' }
+  }
+
+  const amount_cents = dollarsToCents(dollarsStr)
+  if (isNaN(amount_cents) || amount_cents <= 0) {
+    return { error: 'Please enter a valid positive amount' }
+  }
+
+  const supabase = await createClient()
+
+  const { error } = await supabase.rpc('process_earn_transaction', {
+    p_kid_id: kidId,
+    p_amount_cents: amount_cents,
+    p_description: description.trim(),
+    p_savings_cents: jarTarget === 'savings' ? amount_cents : 0,
+    p_spend_cents: jarTarget === 'spend' ? amount_cents : 0,
+    p_giving_cents: jarTarget === 'giving' ? amount_cents : 0,
+    p_split_snapshot: null,
+  })
+
+  if (error) {
+    return { error: error.message }
+  }
+
+  revalidatePath(`/parent/kids/${kidId}`)
+  revalidatePath(`/parent/kids/${kidId}/transactions`)
+  revalidatePath(`/kid/${kidId}/dashboard`)
+  return { success: true }
+}
+
 export async function addWithdrawTransaction(kidId: string, formData: FormData) {
   await requireParentSession()
 

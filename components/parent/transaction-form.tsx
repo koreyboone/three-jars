@@ -2,11 +2,13 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { addEarnTransaction, addWithdrawTransaction } from '@/lib/actions/transactions'
+import { addEarnTransaction, addSingleJarEarnTransaction, addWithdrawTransaction } from '@/lib/actions/transactions'
 import { computeEarnSplit, dollarsToCents, centsToDisplay } from '@/lib/money'
 import type { JarSettings, Jar } from '@/types/db'
 
 type TxMode = 'earn' | 'spend' | 'give'
+type EarnMode = 'split' | 'single'
+type SingleJarTarget = 'savings' | 'spend' | 'giving'
 
 interface TransactionFormProps {
   kidId: string
@@ -22,6 +24,8 @@ export default function TransactionForm({
   jars,
 }: TransactionFormProps) {
   const [mode, setMode] = useState<TxMode>('earn')
+  const [earnMode, setEarnMode] = useState<EarnMode>('split')
+  const [singleJarTarget, setSingleJarTarget] = useState<SingleJarTarget>('savings')
   const [amount, setAmount] = useState('')
   const [description, setDescription] = useState('')
   const [jarTarget, setJarTarget] = useState<'spend' | 'giving'>('spend')
@@ -41,7 +45,7 @@ export default function TransactionForm({
 
   // Live split preview for earn mode
   const split =
-    mode === 'earn' && isValidAmount
+    mode === 'earn' && earnMode === 'split' && isValidAmount
       ? computeEarnSplit(
           amountCents,
           settings.savings_percent,
@@ -57,7 +61,12 @@ export default function TransactionForm({
     startTransition(async () => {
       let result
       if (mode === 'earn') {
-        result = await addEarnTransaction(kidId, formData)
+        if (earnMode === 'single') {
+          formData.set('jar_target', singleJarTarget)
+          result = await addSingleJarEarnTransaction(kidId, formData)
+        } else {
+          result = await addEarnTransaction(kidId, formData)
+        }
       } else {
         formData.set('type', mode)
         formData.set('jar_target', jarTarget)
@@ -107,6 +116,57 @@ export default function TransactionForm({
       </div>
 
       <form action={handleSubmit} className="space-y-4">
+        {/* Earn mode toggle: split vs single jar */}
+        {mode === 'earn' && (
+          <div className="flex bg-slate-100 rounded-full p-1">
+            <button
+              type="button"
+              onClick={() => { setEarnMode('split'); setError('') }}
+              className={`flex-1 py-1.5 px-3 rounded-full text-xs font-semibold transition-all ${
+                earnMode === 'split' ? 'bg-white text-navy shadow' : 'text-slate-500 hover:text-slate-700'
+              }`}
+            >
+              Split across jars
+            </button>
+            <button
+              type="button"
+              onClick={() => { setEarnMode('single'); setError('') }}
+              className={`flex-1 py-1.5 px-3 rounded-full text-xs font-semibold transition-all ${
+                earnMode === 'single' ? 'bg-white text-navy shadow' : 'text-slate-500 hover:text-slate-700'
+              }`}
+            >
+              Single jar
+            </button>
+          </div>
+        )}
+
+        {/* Single jar picker */}
+        {mode === 'earn' && earnMode === 'single' && (
+          <div>
+            <p className="block text-sm font-medium text-slate-700 mb-2">Add to jar</p>
+            <div className="grid grid-cols-3 gap-2">
+              {([
+                { value: 'savings', label: '💰 Savings', color: 'savings' },
+                { value: 'spend', label: '🛍️ Spend', color: 'spend' },
+                { value: 'giving', label: '❤️ Giving', color: 'giving' },
+              ] as { value: SingleJarTarget; label: string; color: string }[]).map(({ value, label, color }) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setSingleJarTarget(value)}
+                  className={`py-2.5 px-2 rounded-lg border-2 text-xs font-semibold transition-all text-center ${
+                    singleJarTarget === value
+                      ? `border-${color} bg-${color}/10 text-${color}`
+                      : 'border-slate-200 text-slate-500 hover:border-slate-300'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div>
           <label
             htmlFor="amount"
@@ -213,7 +273,12 @@ export default function TransactionForm({
                 : 'bg-amber-50 text-amber-700'
             }`}
           >
-            {mode === 'earn' && split ? (
+            {mode === 'earn' && earnMode === 'single' ? (
+              <p>
+                {centsToDisplay(amountCents)} will be added to{' '}
+                {singleJarTarget === 'savings' ? '💰 Savings' : singleJarTarget === 'spend' ? '🛍️ Spend' : '❤️ Giving'}
+              </p>
+            ) : mode === 'earn' && split ? (
               <p>
                 {centsToDisplay(amountCents)} will be added as: 💰 Savings{' '}
                 {centsToDisplay(split.savings_cents)} · 🛍️ Spend{' '}
