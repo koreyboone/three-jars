@@ -61,13 +61,17 @@ export default function TransactionHistory({
                     </span>
                   )}
                 </p>
-                {tx.type === 'earn' && tx.split_snapshot && (
-                  <p className="text-xs text-slate-400 mt-0.5">
-                    Split: 💰{centsToDisplay(tx.savings_amount_cents ?? 0)} ·
-                    🛍️{centsToDisplay(tx.spend_amount_cents)} ·
-                    ❤️{centsToDisplay(tx.giving_amount_cents)}
-                  </p>
-                )}
+                <div className="flex items-center gap-1 mt-0.5">
+                  {(tx.savings_amount_cents ?? 0) !== 0 && (
+                    <span className="text-sm" title={`Savings: ${centsToDisplay(Math.abs(tx.savings_amount_cents ?? 0))}`}>💰</span>
+                  )}
+                  {tx.spend_amount_cents !== 0 && (
+                    <span className="text-sm" title={`Spend: ${centsToDisplay(Math.abs(tx.spend_amount_cents))}`}>🛍️</span>
+                  )}
+                  {tx.giving_amount_cents !== 0 && (
+                    <span className="text-sm" title={`Giving: ${centsToDisplay(Math.abs(tx.giving_amount_cents))}`}>❤️</span>
+                  )}
+                </div>
               </div>
             </div>
 
